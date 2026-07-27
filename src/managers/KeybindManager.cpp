@@ -123,11 +123,33 @@ void CKeybindManager::removeKeybind(uint32_t mod, const SParsedKey& key) {
 }
 
 void CKeybindManager::removeKeybind(const std::string& displayKeys) {
-    static auto normalize = [](std::string x) -> std::string {
-        std::string n = x;
-        replaceInString(n, " ", "");
-        std::ranges::transform(n, n.begin(), ::tolower);
-        return n;
+    static auto normalize = [](const std::string& x) -> std::string {
+        std::vector<std::string> parts;
+        std::string              token;
+        for (const char c : x) {
+            if (c == '+') {
+                auto t = trim(token);
+                std::ranges::transform(t, t.begin(), ::tolower);
+                parts.push_back(t);
+                token.clear();
+            } else {
+                token += c;
+            }
+        }
+        auto t = trim(token);
+        std::ranges::transform(t, t.begin(), ::tolower);
+        parts.push_back(t);
+
+        if (parts.size() > 1)
+            std::sort(parts.begin(), parts.end() - 1);
+
+        std::string result;
+        for (size_t i = 0; i < parts.size(); ++i) {
+            if (i > 0)
+                result += '+';
+            result += parts[i];
+        }
+        return result;
     };
 
     const auto DISPLAY_KEYS_NORMALIZED = normalize(displayKeys);
